@@ -56,7 +56,7 @@ CREATE TABLE PRODUCT (
     ProductName NVARCHAR(100) NOT NULL,
     ProductType ENUM('Food', 'Drink', 'Card', 'Other Service') NOT NULL,
     SalePrice DECIMAL(10, 2) NOT NULL, -- Giá
-    StockQuantity INT DEFAULT 0, -- Số lượng còn lại
+    StockQuantity INT DEFAULT 0 -- Số lượng còn lại
 );
 
 -- 6. Bảng SESSION (Phiên sử dụng máy)
@@ -130,7 +130,7 @@ CREATE PROCEDURE CreateInvoiceForSession(
     IN employee_id_param INT,
     IN payment_method_param ENUM('Cash', 'Transfer', 'Member Balance')
 )
-BEGIN
+proc: BEGIN
     DECLARE v_start_time DATETIME;
     DECLARE v_end_time DATETIME;
     DECLARE v_price_per_hour DECIMAL(10, 2);
