@@ -5,7 +5,7 @@
 -- 1. Bảng MACHINE_TYPE
 CREATE TABLE MACHINE_TYPE (
     TypeID INT PRIMARY KEY AUTO_INCREMENT,
-    TypeName NVARCHAR(50) NOT NULL UNIQUE, -- Thường, VIP, Gaming, LiveStream
+    TypeName VARCHAR(50) NOT NULL UNIQUE, -- Thường, VIP, Gaming, LiveStream
     PricePerHour DECIMAL(10, 2) NOT NULL, -- Giá tiền mỗi giờ (VNĐ)
     ConfigDescription TEXT
 );
@@ -22,7 +22,7 @@ CREATE TABLE MACHINE (
 -- 3. Bảng PLAYER (Người Chơi/Thành viên)
 CREATE TABLE PLAYER (
     PlayerID INT PRIMARY KEY AUTO_INCREMENT,
-    FullName NVARCHAR(100) NOT NULL,
+    FullName VARCHAR(100) NOT NULL,
     PhoneNumber VARCHAR(15) UNIQUE,
     AccountName VARCHAR(50) NOT NULL UNIQUE,
     Password VARCHAR(255) NOT NULL, -- Có thể hash
@@ -35,7 +35,7 @@ CREATE TABLE PLAYER (
 -- Bảng riêng cho nhân viên, bao gồm cả Chủ Quán (Owner)
 CREATE TABLE EMPLOYEE (
     EmployeeID INT PRIMARY KEY AUTO_INCREMENT,
-    FullName NVARCHAR(100) NOT NULL,
+    FullName VARCHAR(100) NOT NULL,
     PhoneNumber VARCHAR(15) UNIQUE,
     Email VARCHAR(100),
     Role ENUM('Owner', 'Staff') NOT NULL, -- Chủ Quán, Nhân viên
@@ -53,7 +53,7 @@ CREATE TABLE EMPLOYEE (
 -- 5. Bảng PRODUCT (Sản phẩm/Dịch vụ bán kèm)
 CREATE TABLE PRODUCT (
     ProductID INT PRIMARY KEY AUTO_INCREMENT,
-    ProductName NVARCHAR(100) NOT NULL,
+    ProductName VARCHAR(100) NOT NULL,
     ProductType ENUM('Food', 'Drink', 'Card', 'Other Service') NOT NULL,
     SalePrice DECIMAL(10, 2) NOT NULL, -- Giá
     StockQuantity INT DEFAULT 0 -- Số lượng còn lại
