@@ -189,6 +189,23 @@ proc: BEGIN
         'Paid'
     );
 
+    -- 7. Xử lý thanh toán bằng số dư thành viên
+    IF payment_method_param = 'Member Balance' THEN
+        DECLARE v_player_id INT;
+        SELECT PlayerID INTO v_player_id FROM SESSION WHERE SessionID = session_id_param;
+
+        IF v_player_id IS NOT NULL THEN
+            -- Trừ tiền từ số dư
+            UPDATE PLAYER
+            SET Balance = Balance - v_grand_total
+            WHERE PlayerID = v_player_id;
+
+            -- Ghi log giao dịch
+            INSERT INTO TRANSACTION_LOG (PlayerID, EmployeeID, TransactionType, Amount, Note)
+            VALUES (v_player_id, employee_id_param, 'Payment', v_grand_total, CONCAT(N'Thanh toán hóa đơn ', LAST_INSERT_ID()));
+        END IF;
+    END IF;
+
     SELECT CONCAT('Hóa đơn cho SessionID ', session_id_param, ' đã được tạo thành công. Tổng tiền: ', v_grand_total) AS Result;
 
 END //
@@ -483,4 +500,63 @@ BEGIN
 
     SELECT CONCAT('Máy ', machine_id, ' đã được mở khóa và sẵn sàng sử dụng.') AS Result;
 END //
+DELIMITER ;
+
+-- =================================================================
+-- 11. CHỨC NĂNG KIỂM TRA CÒN MÁY (Check available machines)
+-- =================================================================
+DROP PROCEDURE IF EXISTS CheckAvailableMachines;
+
+DELIMITER //
+
+CREATE PROCEDURE CheckAvailableMachines()
+BEGIN
+    SELECT
+        M.MachineID AS MachineID,
+        M.MachineName AS MachineName,
+        MT.TypeName AS MachineType
+    FROM
+        MACHINE M
+    JOIN
+        MACHINE_TYPE MT ON M.TypeID = MT.TypeID
+    WHERE
+        M.Status = 'Available'
+    ORDER BY
+        MachineID;
+END //
+
+DELIMITER ;
+
+-- =================================================================
+-- 12. CHỨC NĂNG CHO PHÉP NGƯỜI CHƠI KIỂM TRA SỐ DƯ CỦA CHÍNH MÌNH
+-- (Check Player Balance)
+-- =================================================================
+-- Ngoài ra cho phép nhân viên/chủ quán kiểm tra số dư của bất kỳ người chơi nào.
+DROP PROCEDURE IF EXISTS CheckPlayerBalance;
+
+DELIMITER //
+
+CREATE PROCEDURE CheckPlayerBalance(
+    IN player_id_to_check INT,
+    IN caller_id INT,
+    IN caller_role VARCHAR(20) -- 'Player', 'Staff', hoặc 'Owner'
+)
+BEGIN
+    -- Kiểm tra quyền truy cập
+    IF caller_role = 'Player' AND player_id_to_check != caller_id THEN
+        -- Người chơi chỉ được kiểm tra số dư của chính mình
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Lỗi: Người chơi chỉ có thể kiểm tra số dư tài khoản của chính mình.';
+    ELSE
+        -- Nếu là Staff/Owner hoặc Player kiểm tra chính mình, tiến hành truy vấn
+        SELECT
+            P.PlayerID,
+            P.AccountName,
+            P.Balance
+        FROM
+            PLAYER P
+        WHERE
+            P.PlayerID = player_id_to_check;
+    END IF;
+END //
+
 DELIMITER ;
