@@ -138,6 +138,7 @@ proc: BEGIN
     DECLARE v_total_machine_cost DECIMAL(10, 2);
     DECLARE v_total_product_cost DECIMAL(10, 2);
     DECLARE v_grand_total DECIMAL(10, 2);
+    DECLARE v_player_id INT;
 
     -- 1. Lấy thông tin phiên chơi
     SELECT StartTime, EndTime, PricePerHour
@@ -153,7 +154,7 @@ proc: BEGIN
 
     -- 2. Tính toán TotalMachineCost
     SET v_total_seconds = TIMESTAMPDIFF(SECOND, v_start_time, v_end_time);
-    SET v_total_machine_cost = (v_total_seconds / 3600) * v_price_per_hour;
+    SET v_total_machine_cost = (v_total_seconds * v_price_per_hour) / 3600;
 
     -- 3. Tính toán TotalProductCost (Đảm bảo tính đầy đủ từ SESSION_DETAIL)
     SELECT IFNULL(SUM(SubTotal), 0)
@@ -191,7 +192,6 @@ proc: BEGIN
 
     -- 7. Xử lý thanh toán bằng số dư thành viên
     IF payment_method_param = 'Member Balance' THEN
-        DECLARE v_player_id INT;
         SELECT PlayerID INTO v_player_id FROM SESSION WHERE SessionID = session_id_param;
 
         IF v_player_id IS NOT NULL THEN
@@ -362,7 +362,7 @@ DELIMITER //
 CREATE PROCEDURE DowngradeInactiveMembers()
 BEGIN
     DECLARE inactive_period DATE;
-    SET inactive_period = DATE_SUB(CURDATE(), INTERVAL 3 MONTH);
+    SET inactive_period = DATE_SUB(NOW(), INTERVAL 3 MONTH);
 
     -- Cập nhật thành viên VIP/SVIP không có phiên chơi nào sau ngày inactive_period
     UPDATE PLAYER P
