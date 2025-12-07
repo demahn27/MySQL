@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ proc_info['title'] }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .form-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 1000px;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255,255,255,0.5);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Header with gradient bar */
+        .form-header {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            left: -40px;
+            right: -40px;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 24px 24px 0 0;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        /* Grid layout for form fields */
+        .form-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        input:focus, select:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        input::placeholder {
+            color: #bdc3c7;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state-text {
+            color: #555;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* Info card */
+        .info-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .info-card-text {
+            color: #555;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+            
+            .form-fields {
+                grid-template-columns: 1fr;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Loading state */
+        .btn-primary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h2>
+                <span>🚀</span>
+                <span>{{ proc_info['title'] }}</span>
+            </h2>
+            <p class="subtitle">Nhập các thông tin cần thiết để thực thi</p>
+        </div>
+        
+        <form method="POST" id="procForm">
+            {% if proc_info['params']|length == 0 %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">✨</div>
+                    <p class="empty-state-text">Chức năng này không cần tham số đầu vào</p>
+                </div>
+            {% else %}
+                <div class="info-card">
+                    <div class="info-card-title">📝 Thông tin</div>
+                    <p class="info-card-text">Vui lòng điền đầy đủ các trường bên dưới để thực thi procedure</p>
+                </div>
+                
+                <div class="form-fields">
+                    {% for param in proc_info['params'] %}
+                        <div class="form-group">
+                            <label for="param_{{ loop.index0 }}">{{ param }}</label>
+                            {% if 'Ngày' in param or 'Date' in param %}
+                                <input type="datetime-local" 
+                                       id="param_{{ loop.index0 }}"
+                                       name="param_{{ loop.index0 }}" 
+                                       >
+                            {% else %}
+                                <input type="text" 
+                                       id="param_{{ loop.index0 }}"
+                                       name="param_{{ loop.index0 }}" 
+                                       placeholder="Nhập {{ param|lower }}..." 
+                                       >
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span>▶</span>
+                    <span>Thực Thi</span>
+                </button>
+                
+                <button type="button" onclick="window.location.href='/'" class="btn btn-secondary">
+                    <span>←</span>
+                    <span>Quay lại Dashboard</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Add loading state to submit button
+        document.getElementById('procForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span><span>Đang xử lý...</span>';
+        });
+    </script>
+
+</body>
+</html>

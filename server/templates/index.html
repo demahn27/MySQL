@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Manager Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            color: white;
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            letter-spacing: -1px;
+        }
+        
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1em;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+        
+        .btn-code {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95em;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .btn-code:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            animation: fadeInUp 1s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--color-start), var(--color-end));
+        }
+        
+        .section-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        
+        /* Color themes */
+        .sec-1 {
+            --color-start: #ff6b6b;
+            --color-end: #ee5a6f;
+        }
+        .sec-2 {
+            --color-start: #4facfe;
+            --color-end: #00f2fe;
+        }
+        .sec-3 {
+            --color-start: #43e97b;
+            --color-end: #38f9d7;
+        }
+        .sec-4 {
+            --color-start: #a855f7;
+            --color-end: #e879f9;
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title span:not(.section-icon) {
+            background: linear-gradient(90deg, var(--color-start), var(--color-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .section-icon {
+            font-size: 1.3em;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        
+        .proc-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .proc-list li {
+            margin-bottom: 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .proc-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .proc-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 18px;
+            background: white;
+            border: none;
+            text-decoration: none;
+            color: #2c3e50;
+            border-radius: 0;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95em;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .proc-list li:first-child .proc-btn {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .proc-list li:last-child .proc-btn {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .proc-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--color-start), var(--color-end));
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .proc-btn:hover {
+            background: linear-gradient(90deg, 
+                rgba(var(--color-rgb), 0.1), 
+                rgba(var(--color-rgb), 0.05));
+            padding-left: 28px;
+        }
+        
+        .proc-btn:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .sec-1 .proc-btn { --color-rgb: 255, 107, 107; }
+        .sec-2 .proc-btn { --color-rgb: 79, 172, 254; }
+        .sec-3 .proc-btn { --color-rgb: 67, 233, 123; }
+        .sec-4 .proc-btn { --color-rgb: 168, 85, 247; }
+        
+        .arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .proc-btn:hover .arrow {
+            transform: translateX(5px);
+        }
+        
+        /* Stats badge */
+        .stats-badge {
+            display: inline-block;
+            background: rgba(0,0,0,0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .section-card { padding: 20px; }
+        }
+        
+        /* Loading animation for demo */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cyber Manager</h1>
+            <p class="subtitle">💻 Hệ thống quản lý phòng net chuyên nghiệp</p>
+            <a href="/source-code" class="btn-code">
+                &lt;/&gt; Xem Source Code SQL
+            </a>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="section-card sec-1">
+                <div class="section-title">
+                    <span class="section-icon">🎮</span>
+                    <span>Quản Lý Phiên</span>
+                </div>
+                <ul class="proc-list">
+                    {% for key, val in procedures.items() %}
+                        {% if key in ['StartSession', 'sp_TopUpBalance', 'EndSession', 'AddProductToSession', 'CreateInvoiceForSession'] %}
+                            <li>
+                                <a href="/proc/{{ key }}" class="proc-btn">
+                                    <span class="arrow">→</span>
+                                    <span>{{ val.title }}</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section-card sec-2">
+                <div class="section-title">
+                    <span class="section-icon">💻</span>
+                    <span>Quản Lý Máy Trạm</span>
+                </div>
+                <ul class="proc-list">
+                    {% for key, val in procedures.items() %}
+                        {% if key in ['CheckAvailableMachines', 'LockMachine', 'UnlockMachine', 'GetMachineStatusStats', 'GetMachineUsageStats'] %}
+                            <li>
+                                <a href="/proc/{{ key }}" class="proc-btn">
+                                    <span class="arrow">→</span>
+                                    <span>{{ val.title }}</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section-card sec-3">
+                <div class="section-title">
+                    <span class="section-icon">👥</span>
+                    <span>Quản Lý Hội Viên</span>
+                </div>
+                <ul class="proc-list">
+                    {% for key, val in procedures.items() %}
+                        {% if key in ['RegisterNewPlayer', 'CheckPlayerBalance', 'GetPlayerHistory', 'GiveNewAccountBonus', 'UpgradeMemberType', 'DowngradeInactiveMembers'] %}
+                            <li>
+                                <a href="/proc/{{ key }}" class="proc-btn">
+                                    <span class="arrow">→</span>
+                                    <span>{{ val.title }}</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section-card sec-4">
+                <div class="section-title">
+                    <span class="section-icon">📊</span>
+                    <span>Báo Cáo Doanh Thu</span>
+                </div>
+                <ul class="proc-list">
+                    {% for key, val in procedures.items() %}
+                        {% if key in ['GetRevenueReport', 'GetProductSalesStats', 'GetTopAndBottomProducts', 'GetEmployeeCount'] %}
+                            <li>
+                                <a href="/proc/{{ key }}" class="proc-btn">
+                                    <span class="arrow">→</span>
+                                    <span>{{ val.title }}</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

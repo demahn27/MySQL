@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Source Code Procedures</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            animation: slideDown 0.5s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Search box */
+        .search-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-icon {
+            font-size: 1.2em;
+            color: #667eea;
+        }
+        
+        #searchInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            color: #2c3e50;
+        }
+        
+        #searchInput::placeholder {
+            color: #bdc3c7;
+        }
+        
+        /* Procedure cards */
+        .proc-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .proc-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        }
+        
+        .proc-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 18px 24px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .proc-header:hover {
+            background: linear-gradient(135deg, #34495e 0%, #3d566e 100%);
+        }
+        
+        .proc-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .proc-icon {
+            font-size: 1.3em;
+        }
+        
+        .toggle-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        .toggle-arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .proc-container.active .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .proc-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: #1e1e1e;
+        }
+        
+        .proc-container.active .proc-body {
+            max-height: 1000px;
+            overflow-y: auto;
+        }
+        
+        /* Custom scrollbar for proc-body */
+        .proc-body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .proc-body::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        
+        .proc-body::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 5px;
+        }
+        
+        .proc-body::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+        
+        .code-header {
+            background: #2d2d2d;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3d3d3d;
+        }
+        
+        .code-title {
+            color: #abb2bf;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .copy-btn {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            border: 1px solid #667eea;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .copy-btn.copied {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border-color: #28a745;
+        }
+        
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #d4d4d4;
+            white-space: pre;
+        }
+        
+        /* Custom scrollbar for code */
+        pre::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        pre::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        
+        pre::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 60px 30px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .empty-text {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .empty-subtext {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+        
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .proc-header {
+                padding: 14px 16px;
+            }
+            
+            .proc-name {
+                font-size: 0.95rem;
+            }
+            
+            .toggle-hint {
+                font-size: 0.75em;
+            }
+            
+            pre {
+                font-size: 0.8rem;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>
+                    <span>📝</span>
+                    <span>Source Code Procedures</span>
+                </h1>
+            </div>
+            <div class="header-actions">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>📦</span>
+                        <span id="totalCount">{{ source_codes|length }} procedures</span>
+                    </div>
+                </div>
+                <a href="/" class="btn">
+                    <span>←</span>
+                    <span>Trang chủ</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm procedure theo tên...">
+            </div>
+        </div>
+
+        <div id="procedureList">
+            {% for name, code in source_codes.items() %}
+            <div class="proc-container" data-name="{{ name|lower }}">
+                <div class="proc-header" onclick="toggleCode('{{ name }}')">
+                    <div class="proc-name">
+                        <span class="proc-icon">⚙️</span>
+                        <span>{{ name }}</span>
+                    </div>
+                    <div class="toggle-hint">
+                        <span>Xem code</span>
+                        <span class="toggle-arrow">▼</span>
+                    </div>
+                </div>
+                <div id="code-{{ name }}" class="proc-body">
+                    <div class="code-header">
+                        <span class="code-title">SQL Procedure</span>
+                        <button class="copy-btn" onclick="copyCode('{{ name }}', event)">
+                            <span>📋</span>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <pre id="pre-{{ name }}">{{ code|safe }}</pre>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-text">Không tìm thấy kết quả</div>
+            <div class="empty-subtext">Thử tìm kiếm với từ khóa khác</div>
+        </div>
+    </div>
+
+    <script>
+        function toggleCode(name) {
+            const container = document.querySelector(`[data-name="${name.toLowerCase()}"]`);
+            container.classList.toggle('active');
+        }
+
+        function copyCode(name, event) {
+            event.stopPropagation();
+            const codeElement = document.getElementById('pre-' + name);
+            const button = event.currentTarget;
+            const textSpan = button.querySelector('.copy-text');
+            
+            navigator.clipboard.writeText(codeElement.textContent).then(() => {
+                button.classList.add('copied');
+                textSpan.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    textSpan.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const procedureList = document.getElementById('procedureList');
+        const emptyState = document.getElementById('emptyState');
+        const containers = document.querySelectorAll('.proc-container');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            containers.forEach(container => {
+                const name = container.getAttribute('data-name');
+                if (name.includes(searchTerm)) {
+                    container.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0) {
+                procedureList.style.display = 'none';
+                emptyState.style.display = 'block';
+            } else {
+                procedureList.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+        });
+
+        // Expand all / Collapse all
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to expand all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                containers.forEach(c => c.classList.add('active'));
+            }
+            // Ctrl/Cmd + L to collapse all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                containers.forEach(c => c.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+</html>

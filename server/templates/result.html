@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả thực thi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            animation: slideDown 0.5s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        /* Alerts */
+        .alerts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .alert {
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .alert-success {
+            background: rgba(212, 237, 218, 0.95);
+            color: #155724;
+            border-left: 5px solid #28a745;
+        }
+        
+        .alert-error {
+            background: rgba(248, 215, 218, 0.95);
+            color: #721c24;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .alert-icon {
+            font-size: 1.5em;
+            flex-shrink: 0;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        
+        .alert-message {
+            line-height: 1.5;
+        }
+        
+        /* Table Container */
+        .table-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            animation: fadeInUp 0.7s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .table-title {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .table-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            background: white;
+        }
+        
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background-color: #e3f2fd;
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        td {
+            color: #2c3e50;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .empty-state-text {
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+        
+        /* No results message */
+        .no-results {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 60px 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .no-results-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+        
+        .no-results-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .no-results-text {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            .table-container {
+                padding: 20px;
+            }
+            
+            th, td {
+                padding: 12px 8px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Scroll hint */
+        .scroll-hint {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            margin-top: 20px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h2>
+                    <span>📊</span>
+                    <span>{{ proc_title }}</span>
+                </h2>
+                <a href="/" class="btn">
+                    <span>←</span>
+                    <span>Quay lại trang chủ</span>
+                </a>
+            </div>
+        </div>
+
+        {% if error or messages %}
+            <div class="alerts-container">
+                {% if error %}
+                    <div class="alert alert-error">
+                        <div class="alert-icon">❌</div>
+                        <div class="alert-content">
+                            <div class="alert-title">Lỗi xảy ra</div>
+                            <div class="alert-message">{{ error }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% for msg in messages %}
+                    <div class="alert alert-success">
+                        <div class="alert-icon">✅</div>
+                        <div class="alert-content">
+                            <div class="alert-message">{{ msg }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if results %}
+            {% for table in results %}
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">
+                            <span>📋</span>
+                            <span>Bảng dữ liệu</span>
+                            <span class="table-badge">#{{ loop.index }}</span>
+                        </h3>
+                    </div>
+                    
+                    {% if table.rows %}
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {% for col in table.columns %}
+                                            <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table.rows %}
+                                        <tr>
+                                            {% for cell in row %}
+                                                <td>{{ cell }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p class="empty-state-text">Truy vấn thành công nhưng không có dữ liệu nào trả về</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% elif not error %}
+            <div class="no-results">
+                <div class="no-results-icon">✨</div>
+                <h3 class="no-results-title">Thực thi thành công!</h3>
+                <p class="no-results-text">Procedure đã được thực thi nhưng không có dữ liệu để hiển thị</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
