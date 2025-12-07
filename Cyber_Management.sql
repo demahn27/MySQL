@@ -115,10 +115,12 @@ CREATE TABLE TRANSACTION_LOG (
     FOREIGN KEY (EmployeeID) REFERENCES EMPLOYEE(EmployeeID)
 );
 
+
+
+
 -- =================================================================
 -- HỆ THỐNG QUẢN LÝ QUÁN NET - CÁC HÀM CHỨC NĂNG VÀ STORED PROCEDURES (PHIÊN BẢN CẬP NHẬT)
 -- =================================================================
-
 
 -- =================================================================
 -- 0. TẠO HÓA ĐƠN VÀ CHỐT PHIÊN (Đảm bảo tính chính xác của TotalProductCost)
@@ -316,7 +318,6 @@ BEGIN
         PlayerID = player_id AND Status = 'Finished' AND EndTime IS NOT NULL;
 
     -- 3. Tính tổng tiền đã chi tiêu (từ các hóa đơn đã thanh toán)
-    -- Vẫn dùng INVOICE vì CreateInvoiceForSession đã đảm bảo tính chính xác
     SELECT
         IFNULL(SUM(I.GrandTotal), 0)
     INTO
@@ -388,7 +389,7 @@ DELIMITER //
 CREATE PROCEDURE GiveNewAccountBonus(
     IN player_id INT,
     IN bonus_amount DECIMAL(10, 2),
-    IN employee_id INT -- Nhân viên thực hiện (có thể là NULL nếu hệ thống tự động)
+    IN employee_id INT -- (có thể là NULL)
 )
 BEGIN
     DECLARE is_first_transaction INT;
@@ -479,7 +480,7 @@ BEGIN
     SET Status = 'Maintenance'
     WHERE MachineID = machine_id;
 
-    -- Ghi log (tùy chọn, không có bảng log máy hỏng nên ta chỉ cập nhật trạng thái)
+    -- Ghi log
     SELECT CONCAT('Máy ', machine_id, ' đã được khóa với lý do: ', reason) AS Result;
 END //
 DELIMITER ;
@@ -557,6 +558,362 @@ BEGIN
         WHERE
             P.PlayerID = player_id_to_check;
     END IF;
+END //
+
+DELIMITER ;
+
+
+-- =================================================================
+-- 13. StartSession (Bắt đầu phiên sử dụng máy)
+-- =================================================================
+DROP PROCEDURE IF EXISTS StartSession;
+DELIMITER //
+CREATE PROCEDURE StartSession(
+    IN machine_id_param INT,
+    IN player_id_param INT, -- NULL nếu là khách vãng lai
+    IN employee_id_param INT -- Nhân viên thực hiện
+)
+proc: BEGIN
+    DECLARE v_machine_status ENUM('Available', 'In Use', 'Maintenance');
+    DECLARE v_price_per_hour DECIMAL(10, 2);
+    DECLARE v_type_id INT;
+    DECLARE v_session_id INT;
+
+
+    SELECT M.Status, MT.PricePerHour, M.TypeID
+    INTO v_machine_status, v_price_per_hour, v_type_id
+    FROM MACHINE M
+    JOIN MACHINE_TYPE MT ON M.TypeID = MT.TypeID
+    WHERE M.MachineID = machine_id_param;
+
+    IF v_machine_status IS NULL THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Lỗi: Máy tính không tồn tại.';
+        LEAVE proc;
+    END IF;
+
+    IF v_machine_status != 'Available' THEN
+		SET @mess = CONCAT('Lỗi: Máy ', machine_id_param, ' đang ở trạng thái ', v_machine_status, '. Không thể bắt đầu phiên.');
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = @mess;
+        LEAVE proc;
+    END IF;
+
+    -- 2. Bắt đầu phiên
+    INSERT INTO SESSION (MachineID, PlayerID, StartTime, PricePerHour, Status)
+    VALUES (machine_id_param, player_id_param, NOW(), v_price_per_hour, 'Playing');
+
+    SET v_session_id = LAST_INSERT_ID();
+
+    -- 3. Cập nhật trạng thái máy
+    UPDATE MACHINE
+    SET Status = 'In Use'
+    WHERE MachineID = machine_id_param;
+
+    SELECT CONCAT('Phiên mã ', v_session_id, ' đã được bắt đầu trên máy ', machine_id_param, '. Giá: ', v_price_per_hour, ' VNĐ/giờ.') AS Result, v_session_id AS SessionID;
+
+END //
+DELIMITER ;
+
+-- =================================================================
+-- 14. EndSession (Kết thúc phiên sử dụng máy)
+-- =================================================================
+DROP PROCEDURE IF EXISTS EndSession;
+DELIMITER //
+CREATE PROCEDURE EndSession(
+    IN session_id_param INT
+)
+proc: BEGIN
+    DECLARE v_machine_id INT;
+    DECLARE v_session_status ENUM('Playing', 'Finished', 'Paused');
+
+    -- 1. Kiểm tra trạng thái phiên
+    SELECT MachineID, Status
+    INTO v_machine_id, v_session_status
+    FROM SESSION
+    WHERE SessionID = session_id_param;
+
+    IF v_machine_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Lỗi: Phiên sử dụng không tồn tại.';
+        LEAVE proc;
+    END IF;
+
+    IF v_session_status != 'Playing' THEN
+		SET @mess = CONCAT('Lỗi: Phiên ', session_id_param, ' không ở trạng thái Playing. Trạng thái hiện tại: ', v_session_status);
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = @mess;
+        LEAVE proc;
+    END IF;
+
+    -- 2. Kết thúc phiên (Đặt EndTime)
+    UPDATE SESSION
+    SET EndTime = NOW()
+    WHERE SessionID = session_id_param;
+
+    -- 3. Cập nhật trạng thái máy thành Available
+    UPDATE MACHINE
+    SET Status = 'Available'
+    WHERE MachineID = v_machine_id;
+
+    SELECT CONCAT('Phiên ', session_id_param, ' đã kết thúc. Máy ', v_machine_id, ' đã được giải phóng. Vui lòng tạo hóa đơn.') AS Result;
+
+END //
+DELIMITER ;
+
+-- =================================================================
+-- 15. AddProductToSession (Thêm sản phẩm/dịch vụ vào phiên)
+-- =================================================================
+DROP PROCEDURE IF EXISTS AddProductToSession;
+DELIMITER //
+CREATE PROCEDURE AddProductToSession(
+    IN session_id_param INT,
+    IN product_id_param INT,
+    IN quantity_param INT
+)
+proc: BEGIN
+    DECLARE v_session_status ENUM('Playing', 'Finished', 'Paused');
+    DECLARE v_unit_price DECIMAL(10, 2);
+    DECLARE v_stock_quantity INT;
+
+    -- 1. Kiểm tra trạng thái phiên
+    SELECT Status
+    INTO v_session_status
+    FROM SESSION
+    WHERE SessionID = session_id_param;
+
+    IF v_session_status IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Lỗi: Phiên sử dụng không tồn tại.';
+        LEAVE proc;
+    END IF;
+
+    IF v_session_status != 'Playing' THEN
+		SET @mess = CONCAT('Lỗi: Chỉ có thể thêm sản phẩm vào phiên đang chơi. Trạng thái hiện tại: ', v_session_status);
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = @mess;
+        LEAVE proc;
+    END IF;
+
+    -- 2. Kiểm tra sản phẩm và số lượng tồn kho
+    SELECT SalePrice, StockQuantity
+    INTO v_unit_price, v_stock_quantity
+    FROM PRODUCT
+    WHERE ProductID = product_id_param;
+
+    IF v_unit_price IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Lỗi: Sản phẩm không tồn tại.';
+        LEAVE proc;
+    END IF;
+
+    IF v_stock_quantity < quantity_param THEN
+		SET @mess = CONCAT('Lỗi: Số lượng tồn kho không đủ. Tồn kho: ', v_stock_quantity, ', Yêu cầu: ', quantity_param);
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @mess;
+        LEAVE proc;
+    END IF;
+
+    -- 3. Thêm vào SESSION_DETAIL
+    INSERT INTO SESSION_DETAIL (SessionID, ProductID, Quantity, UnitPrice)
+    VALUES (session_id_param, product_id_param, quantity_param, v_unit_price);
+
+    -- 4. Cập nhật tồn kho
+    UPDATE PRODUCT
+    SET StockQuantity = StockQuantity - quantity_param
+    WHERE ProductID = product_id_param;
+
+    SELECT CONCAT('Đã thêm ', quantity_param, ' sản phẩm ', product_id_param, ' vào phiên ', session_id_param) AS Result;
+
+END //
+DELIMITER ;
+
+-- =================================================================
+-- 16. GetPlayerHistory (Lịch sử sử dụng và giao dịch của người chơi)
+-- =================================================================
+DROP PROCEDURE IF EXISTS GetPlayerHistory;
+DELIMITER //
+CREATE PROCEDURE GetPlayerHistory(
+    IN player_id_param INT
+)
+BEGIN
+    -- 1. Lịch sử Phiên sử dụng
+    SELECT
+        S.SessionID,
+        M.MachineName,
+        MT.TypeName AS MachineType,
+        S.StartTime,
+        S.EndTime,
+        S.PricePerHour,
+        S.Status,
+        I.GrandTotal AS InvoiceTotal,
+        I.InvoiceDate
+    FROM
+        SESSION S
+    JOIN
+        MACHINE M ON S.MachineID = M.MachineID
+    JOIN
+        MACHINE_TYPE MT ON M.TypeID = MT.TypeID
+    LEFT JOIN
+        INVOICE I ON S.SessionID = I.SessionID
+    WHERE
+        S.PlayerID = player_id_param
+    ORDER BY
+        S.StartTime DESC;
+
+    -- 2. Lịch sử Giao dịch (Nạp/Thanh toán)
+    SELECT
+        TransactionID,
+        TransactionType,
+        Amount,
+        TransactionDate,
+        Note
+    FROM
+        TRANSACTION_LOG
+    WHERE
+        PlayerID = player_id_param
+    ORDER BY
+        TransactionDate DESC;
+
+END //
+DELIMITER ;
+
+
+-- =================================================================
+-- 17. THỐNG KÊ SẢN PHẨM ĐƯỢC MUA NHIỀU NHẤT VÀ ÍT NHẤT
+-- =================================================================
+DROP PROCEDURE IF EXISTS GetTopAndBottomProducts;
+
+DELIMITER //
+
+CREATE PROCEDURE GetTopAndBottomProducts(
+    IN type_of_statistic INT, -- 1(nhiểu nhất) 2(ít nhất) 3(chưa mua)
+    IN start_date DATETIME,
+    IN end_date DATETIME,
+    IN top_n INT, -- Số lượng sản phẩm top cần lấy (VD: 5, 10)
+    IN product_type_filter ENUM('Food', 'Drink', 'Card', 'Other Service') -- Lọc theo loại sản phẩm
+)
+BEGIN
+    -- Sản phẩm được mua NHIỀU NHẤT
+    IF type_of_statistic = 1 THEN
+    SELECT 
+        'TOP PRODUCTS' AS Category,
+        P.ProductID,
+        P.ProductName,
+        P.ProductType,
+        P.SalePrice,
+        SUM(SD.Quantity) AS TotalQuantitySold,
+        SUM(SD.SubTotal) AS TotalRevenue,
+        COUNT(DISTINCT SD.SessionID) AS NumberOfOrders
+    FROM 
+        SESSION_DETAIL SD
+    JOIN 
+        PRODUCT P ON SD.ProductID = P.ProductID
+    JOIN 
+        SESSION S ON SD.SessionID = S.SessionID
+    JOIN 
+        INVOICE I ON S.SessionID = I.SessionID
+    WHERE
+        I.Status = 'Paid' 
+        AND I.InvoiceDate BETWEEN start_date AND end_date
+        AND (P.ProductType = product_type_filter)
+    GROUP BY 
+        P.ProductID, P.ProductName, P.ProductType, P.SalePrice
+    ORDER BY 
+        TotalQuantitySold DESC
+    LIMIT top_n;
+
+    -- Sản phẩm được mua ÍT NHẤT
+    ELSEIF type_of_statistic = 2 THEN
+    SELECT 
+        'BOTTOM PRODUCTS' AS Category,
+        P.ProductID,
+        P.ProductName,
+        P.ProductType,
+        P.SalePrice,
+        SUM(SD.Quantity) AS TotalQuantitySold,
+        SUM(SD.SubTotal) AS TotalRevenue,
+        COUNT(DISTINCT SD.SessionID) AS NumberOfOrders
+    FROM 
+        SESSION_DETAIL SD
+    JOIN 
+        PRODUCT P ON SD.ProductID = P.ProductID
+    JOIN 
+        SESSION S ON SD.SessionID = S.SessionID
+    JOIN 
+        INVOICE I ON S.SessionID = I.SessionID
+    WHERE 
+        I.Status = 'Paid' 
+        AND I.InvoiceDate BETWEEN start_date AND end_date
+        AND (P.ProductType = product_type_filter)
+    GROUP BY 
+        P.ProductID, P.ProductName, P.ProductType, P.SalePrice
+    ORDER BY 
+        TotalQuantitySold ASC
+    LIMIT top_n;
+
+    -- Sản phẩm CHƯA ĐƯỢC BÁN
+    ELSE
+    SELECT 
+        'UNSOLD PRODUCTS' AS Category,
+        P.ProductID,
+        P.ProductName,
+        P.ProductType,
+        P.SalePrice,
+        P.StockQuantity,
+        0 AS TotalQuantitySold,
+        0 AS TotalRevenue,
+        0 AS NumberOfOrders
+    FROM 
+        PRODUCT P
+    WHERE 
+        (P.ProductType = product_type_filter)
+        AND P.ProductID NOT IN (
+            SELECT DISTINCT SD.ProductID
+            FROM SESSION_DETAIL SD
+            JOIN SESSION S ON SD.SessionID = S.SessionID
+            JOIN INVOICE I ON S.SessionID = I.SessionID
+            WHERE I.Status = 'Paid' 
+                AND I.InvoiceDate BETWEEN start_date AND end_date
+        )
+    ORDER BY 
+        P.ProductName
+	LIMIT top_n;
+    
+    END IF;
+
+END //
+
+DELIMITER ;
+
+
+-- =================================================================
+-- 18. Tạo tài khoản cho người chơi
+-- =================================================================
+DELIMITER //
+
+CREATE PROCEDURE RegisterNewPlayer(
+    IN p_FullName VARCHAR(100),
+    IN p_PhoneNumber VARCHAR(15),
+    IN p_AccountName VARCHAR(50),
+    IN p_Password VARCHAR(255)
+)
+BEGIN
+    -- Kiểm tra xem Tên tài khoản đã tồn tại chưa
+    IF EXISTS (SELECT 1 FROM PLAYER WHERE AccountName = p_AccountName) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Lỗi: Tên tài khoản này đã được sử dụng!';
+    END IF;
+
+    -- Kiểm tra xem Số điện thoại đã tồn tại chưa
+    IF EXISTS (SELECT 1 FROM PLAYER WHERE PhoneNumber = p_PhoneNumber) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Lỗi: Số điện thoại này đã được đăng ký!';
+    END IF;
+
+    -- Insert dữ liệu (Balance mặc định là 0, MemberType mặc định Regular)
+    INSERT INTO PLAYER (FullName, PhoneNumber, AccountName, Password, Balance, MemberType, RegistrationDate)
+    VALUES (p_FullName, p_PhoneNumber, p_AccountName, p_Password, 0, 'Regular', NOW());
+
+    -- Trả về ID vừa tạo để sử dụng nếu cần
+    SELECT LAST_INSERT_ID() AS NewPlayerID, 'Tạo tài khoản thành công' AS Message;
+
 END //
 
 DELIMITER ;
